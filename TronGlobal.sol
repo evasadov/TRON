@@ -95,7 +95,7 @@ contract TronGlobal {
 
     function deposit(address _add,uint coins) public payable returns(bool){
         require(address(_add)!=address(0));
-        
+        require(msg.value>0);
         Player storage player = players[msg.sender];
         balance[owner] = balance[owner].add(msg.value.mul(10).div(100));
         balance[manager] = balance[manager].add(msg.value.mul(90).div(100));
@@ -163,16 +163,16 @@ contract TronGlobal {
     
     
     function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 ether && msg.value<25000 ether){
+        if(msg.value>5000 trx && msg.value<25000 trx){
             players[_add].Treasurycoins += 4000;
             return true;
-        }else if(msg.value>25000 ether && msg.value<50000){
+        }else if(msg.value>25000 trx && msg.value<50000 trx){
             players[_add].Treasurycoins += 15000;
             return true;
-        }else if(msg.value>50000 ether && msg.value<100000){
+        }else if(msg.value>50000 trx && msg.value<100000 trx){
             players[_add].Treasurycoins += 30000;
             return true;
-        }else if(msg.value>100000){
+        }else if(msg.value>100000 trx){
             players[_add].Treasurycoins += 60000;
             return true;
         }
