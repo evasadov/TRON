@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.4.23;
 
 library SafeMath {
 
@@ -93,26 +93,24 @@ contract TronGlobal {
         return balance[_add];
     }
 
-    function deposit(address _add,uint coins) public payable returns(bool){
-        require(address(_add)!=address(0));
+    function deposit(address _add,uint coins) public payable returns(address,uint){
         require(msg.value>0);
-        Player storage player = players[msg.sender];
-        balance[owner] = balance[owner].add(msg.value.mul(10).div(100));
-        balance[manager] = balance[manager].add(msg.value.mul(90).div(100));
-        player.Treasurycoins = player.Treasurycoins.add(coins);
+       // Player storage player = players[_add];
+        owner.transfer(msg.value.mul(10).div(100));
+        manager.transfer(msg.value.mul(90).div(100));
+        players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
         deposit_history[_add][deposit_count].count+=1;
         deposit_history[_add][deposit_count].amount=coins;
         deposit_history[_add][deposit_count].totalamount+=deposit_history[_add][deposit_count].amount;
         usercount.push(_add);
         deposit_count++;
-        return true;
+        return (_add,players[_add].Treasurycoins);
     }
     
     function buy(address _add, uint _type, uint _number,uint _volatile) public returns(bool) {
-        require(address(_add)!=address(0));
         require(_type < TYPES_FACTORIES && _number > 0);
         
-        Player storage player = players[msg.sender];
+        Player storage player = players[_add];
         require(player.Treasurycoins>=prices[_type]);
         player.Treasurycoins-= prices[_type];
         fac_count[_add][_type].factories= _type;
@@ -125,9 +123,7 @@ contract TronGlobal {
         return true;
     }
     
-    function collect(address _add,uint _type) public  returns(bool){
-        require(address(_add)!=address(0));
-        
+    function collect(address _add,uint _type) public  returns(bool){        
         uint Profit = profit[_type];
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
