@@ -40,8 +40,7 @@ contract TronGlobal {
     
     using SafeMath for uint256;
     
-    uint constant TYPES_FACTORIES = 7;
-    uint constant PERIOD = 60 minutes;
+    uint constant TYPES_FACTORIES = 7; 
     uint[TYPES_FACTORIES] prices = [3750, 17625, 66750, 232500, 705000, 1455000,2500000];
     uint[TYPES_FACTORIES] profit = [5, 24, 95, 336, 1038, 2183, 868];
     address owner;
@@ -51,68 +50,73 @@ contract TronGlobal {
         uint Treasurycoins;
         uint Sparecoins;
         uint volatilepoints;
-        uint typeoffac;
+        uint newdeposit;
         uint factories;
         uint countof;
-        uint bank;
-    }
-    
-    struct Deposit {
-        uint totalamount;
-        uint amount;
-        uint count;
-    }
-    
-        struct Withdraw {
-        uint totalamount;
-        uint amount;
-        uint count;
+        uint bank; 
     }
     
     uint deposit_count;
     uint withdraw_count;
-    address[] usercount;
-    uint totalfactories;
+    uint eventvalue =1;
+    uint256 public investedTrx;
+    uint256 public withdrawTrx;
+    mapping(address => bool) public userstatus;
+    uint256 public usercount;
+    uint public totalfactories;
+    uint coinval = 25;
     uint256 public volatile;
     mapping(address => Player) public players;
     mapping(address => mapping(uint=>Player)) fac_count; 
     mapping(address => uint) public balance;
     mapping(address => uint) public numberof_fac;
-    mapping(address => mapping(uint => Deposit)) public deposit_history;
-    mapping(address => mapping(uint => Withdraw)) public withdraw_history;
+
     mapping(uint => uint) public divident;
     mapping(address => uint) public numberof_volatile;
     
+    event depositevent(address addr,uint trxval,uint depo_count);
+    event withdrawevent(address addr,uint trxval,uint depo_count);
 
+    event buyevent(address addr, uint _type,uint time,uint value);
+    
     constructor(address _owner, address _manager) public {
         owner = _owner;
         manager = _manager;
     }
     
     function balanceOf(address _add) public view returns(uint){
-        return balance[_add];
+        return _add.balance;
     }
 
-    function deposit(address _add,uint coins) public payable returns(address,uint){
-        require(msg.value>0);
-       // Player storage player = players[_add];
+    function deposit(address _add) public payable returns(bool){
+        require(_add != owner && (_add != manager));
+        require(msg.value!=0);
+        uint conversion = (msg.value/1000000);
+        uint coinvalue = conversion * coinval;
         owner.transfer(msg.value.mul(10).div(100));
         manager.transfer(msg.value.mul(90).div(100));
-        players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
-        deposit_history[_add][deposit_count].count+=1;
-        deposit_history[_add][deposit_count].amount=coins;
-        deposit_history[_add][deposit_count].totalamount+=deposit_history[_add][deposit_count].amount;
-        usercount.push(_add);
+        players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
+       
+        players[_add].newdeposit = msg.value/1000000;
+
+                if(userstatus[_add]==false)
+            {
+                userstatus[_add]=true;
+                usercount++;
+            }
+        
+        
+        investedTrx+=msg.value/1000000;
         deposit_count++;
-        return (_add,players[_add].Treasurycoins);
+        emit depositevent(_add,msg.value/1000000,deposit_count);
+        return true;
     }
     
-    function buy(address _add, uint _type, uint _number,uint _volatile) public returns(bool) {
+    function buy(address _add, uint _type, uint _number,uint _volatile,uint _time) public returns(bool) {
+        require(_add != owner && (_add != manager));
         require(_type < TYPES_FACTORIES && _number > 0);
-        
-        Player storage player = players[_add];
-        require(player.Treasurycoins>=prices[_type]);
-        player.Treasurycoins-= prices[_type];
+        require(players[_add].Treasurycoins>=prices[_type]);
+        players[_add].Treasurycoins-= prices[_type];
         fac_count[_add][_type].factories= _type;
         fac_count[_add][_type].countof+=_number;
         fac_count[_add][_type].volatilepoints+= _volatile;
@@ -120,10 +124,15 @@ contract TronGlobal {
         numberof_volatile[_add]+=_volatile;
         divident[_type]+=_volatile;
         totalfactories  += _number;
+        dividentPoints(_add,_type);
+        emit buyevent(_add,_type,_time,eventvalue);
+        eventvalue++;
         return true;
     }
     
-    function collect(address _add,uint _type) public  returns(bool){        
+    function collect(address _add,uint _type) public  returns(bool){
+        require(_add != owner && (_add != manager));
+        
         uint Profit = profit[_type];
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
@@ -137,23 +146,23 @@ contract TronGlobal {
         return true;
     }
     
-    
-    function withdraw(address _add,uint _towithdraw) public payable returns(bool){
+    function withdraw(address _add) public payable returns(bool){
+        require(_add != owner && (_add != manager));
         require(players[_add].Sparecoins>=25);
-        uint value = _towithdraw.div(25);
-        require(value==msg.value);
-        players[_add].Sparecoins-=_towithdraw;
-        balance[_add]+=msg.value;
-        withdraw_history[_add][withdraw_count].count+=1;
-        withdraw_history[_add][withdraw_count].amount=_towithdraw;
-        withdraw_history[_add][withdraw_count].totalamount+=withdraw_history[_add][withdraw_count].amount;
+        players[_add].Sparecoins-= msg.value/1000000;
+        withdrawTrx+=msg.value/1000000;
+        _add.transfer(msg.value);
         withdraw_count++;
+        emit withdrawevent(_add,msg.value/1000000,withdraw_count);
+	return true;
     }
     
     
-    function dividentPoints(address _add,uint _type,uint _newdeposit) public returns(bool){      //divide the result by 100
-        uint256 volatil = ((fac_count[_add][_type].countof).mul(_newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
+    function dividentPoints(address _add,uint _type) public returns(bool){      //divide the result by 100
+        uint256 newdeposit = players[_add].newdeposit * coinval;
+        uint256 volatil = ((fac_count[_add][_type].countof).mul(newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
         players[_add].bank+=volatil.div(100);
+        players[_add].newdeposit=0;
         return true;
     }
     
