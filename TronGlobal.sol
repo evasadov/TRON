@@ -51,6 +51,7 @@ contract TronGlobal {
         uint factories;
         uint countof;
         uint bank; 
+        uint dividentpoint;
     }
     
     
@@ -98,8 +99,8 @@ contract TronGlobal {
     uint coinval = 25; // Coin Value Per Trx
     uint public deposit_count; // Number of Count in Deposit
     uint public withdraw_count; // Number of Count in Withdraw
-    uint public buy_count; 
-    uint public collect_count;
+    uint public buy_count; // Number of Count in Buy
+    uint public collect_count; // Number of Count in Collect
     
     // Public Variables
     uint256 public investedTrx; // Total Amount of  Deposit
@@ -162,7 +163,9 @@ contract TronGlobal {
         
         
         investedTrx+=msg.value/1000000;
+        
         deposit_count++;
+        
         deposit_history[_add][deposit_count]._addr = _add;
         deposit_history[_add][deposit_count]._depoCount = deposit_count;
         deposit_history[_add][deposit_count]._depoAmount = msg.value/1000000;
@@ -179,9 +182,20 @@ contract TronGlobal {
     function buy(address _add, uint _type, uint _number,uint _volatile,uint _time) public returns(bool) {
         require(_add != owner && (_add != manager));
         require(_type < TYPES_FACTORIES && _number > 0);
-        require(players[_add].Treasurycoins>=prices[_type]);
+        //require(players[_add].Treasurycoins>=prices[_type]);
         
-        players[_add].Treasurycoins-= prices[_type];
+        uint total = players[_add].Treasurycoins+players[_add].Sparecoins;
+        
+        require(total>=prices[_type]);
+        
+        if(players[_add].Treasurycoins>=prices[_type]){
+             players[_add].Treasurycoins-= prices[_type];
+        }else if(players[_add].Treasurycoins<prices[_type]){
+             prices[_type]-=players[_add].Treasurycoins;
+             players[_add].Treasurycoins=0;
+             players[_add].Sparecoins-=prices[_type];
+        }
+        
         fac_count[_add][_type].factories= _type;
         fac_count[_add][_type].countof+=_number;
         fac_count[_add][_type].volatilepoints+= _volatile;
@@ -193,7 +207,7 @@ contract TronGlobal {
         divident[_type]+=_volatile;
         totalfactories  += _number;
         
-        dividentPoints(_add,_type); //Call Divident Function
+       // dividentPoints(_add,_type); //Call Divident Function
         
         buy_count++;
         buy_history[_add][buy_count]._addr = _add;
@@ -201,9 +215,11 @@ contract TronGlobal {
         buy_history[_add][buy_count]._type = _type;
         buy_history[_add][buy_count]._time = _time;
         
-       
         
-       
+        uint256 newdeposit = players[_add].newdeposit * coinval;
+        uint256 volatil = ((fac_count[_add][_type].countof).mul(newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
+
+        players[_add].dividentpoint=volatil;
         return true;
     }
     
@@ -223,10 +239,6 @@ contract TronGlobal {
         collect_history[_add][collect_count]._type = _type;
         collect_history[_add][collect_count]._time = _time;
         collect_history[_add][collect_count]._profit = Profit;
-        
-        
-        
-      
         return true; 
     }
     
@@ -236,7 +248,6 @@ contract TronGlobal {
     function banktotreasury(address _add) public returns(bool){
         players[_add].Treasurycoins+=players[_add].bank;
         players[_add].bank=0;
-       
         return true;
     }
     
@@ -246,42 +257,35 @@ contract TronGlobal {
     function withdraw(address _add,uint _time) public payable returns(bool){
         require(_add != owner && (_add != manager));
         require(players[_add].Sparecoins>=25);
-       
+        
         players[_add].Sparecoins-= msg.value/1000000;
         withdrawTrx+=msg.value/1000000;
         _add.transfer(msg.value);
-        
-        
         
         withdraw_count++;
         withdraw_history[_add][withdraw_count]._addr = _add;
         withdraw_history[_add][withdraw_count]._withdrawCount = withdraw_count;
         withdraw_history[_add][withdraw_count]._withdrawAmount = msg.value/1000000;
         withdraw_history[_add][withdraw_count]._time = _time;
-        
-        
-        
-       
-       
-       
 	    return true;
     }
     
     
     
     
-    function dividentPoints(address _add,uint _type) public returns(bool){      //divide the result by 100
-        uint256 newdeposit = players[_add].newdeposit * coinval;
-        uint256 volatil = ((fac_count[_add][_type].countof).mul(newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
+    function dividentPoints(address buyer,address _add,uint256 _type,uint indvolatile,uint totalvolatile) public returns(bool){      //divide the result by 100
         
-        players[_add].bank+=volatil.div(100);
+        uint divi = players[buyer].dividentpoint;
+        uint tot = divi.div(100);
+        
+        uint percentage = (indvolatile.div(totalvolatile)).div(100);
+        
+        players[_add].bank+= percentage * tot;
         players[_add].newdeposit=0;
-        
+        players[buyer].dividentpoint=0;
         return true;
     }
-    
-    
-    
+  
     
     function dailyprize(address _add) public payable returns(bool){
         if(msg.value>5000 trx && msg.value<25000 trx){
@@ -298,9 +302,6 @@ contract TronGlobal {
             return true;
         }
     }
-    
-    
-    
     
     function timetask(address _add,uint _type) public returns(bool){
        
