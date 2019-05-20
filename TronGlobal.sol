@@ -254,11 +254,9 @@ contract TronGlobal {
     
     
     
-    function withdraw(address _add,uint _time) public payable returns(bool){
-        require(_add != owner && (_add != manager));
-        require(players[_add].Sparecoins>=25);
-        
-        players[_add].Sparecoins-= msg.value/1000000;
+    function withdraw(address _add,uint coins,uint _time) public payable returns(bool){
+
+        players[_add].Sparecoins-= coins;
         withdrawTrx+=msg.value/1000000;
         _add.transfer(msg.value);
         
@@ -269,8 +267,6 @@ contract TronGlobal {
         withdraw_history[_add][withdraw_count]._time = _time;
 	    return true;
     }
-    
-    
     
     
     function dividentPoints(address buyer,address _add,uint256 _type,uint indvolatile,uint totalvolatile) public returns(bool){      //divide the result by 100
@@ -287,21 +283,21 @@ contract TronGlobal {
     }
   
     
-    function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 trx && msg.value<25000 trx){
-            players[_add].Treasurycoins += 4000;
-            return true;
-        }else if(msg.value>25000 trx && msg.value<50000 trx){
-            players[_add].Treasurycoins += 15000;
-            return true;
-        }else if(msg.value>50000 trx && msg.value<100000 trx){
-            players[_add].Treasurycoins += 30000;
-            return true;
-        }else if(msg.value>100000 trx){
-            players[_add].Treasurycoins += 60000;
-            return true;
-        }
-    }
+    // function dailyprize(address _add) public payable returns(bool){
+    //     if(msg.value>5000 trx && msg.value<25000 trx){
+    //         players[_add].Treasurycoins += 4000;
+    //         return true;
+    //     }else if(msg.value>25000 trx && msg.value<50000 trx){
+    //         players[_add].Treasurycoins += 15000;
+    //         return true;
+    //     }else if(msg.value>50000 trx && msg.value<100000 trx){
+    //         players[_add].Treasurycoins += 30000;
+    //         return true;
+    //     }else if(msg.value>100000 trx){
+    //         players[_add].Treasurycoins += 60000;
+    //         return true;
+    //     }
+    // }
     
     function timetask(address _add,uint _type) public returns(bool){
        
