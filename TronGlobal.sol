@@ -147,7 +147,7 @@ contract TronGlobal {
     
     
    
-    function deposit(address _add, uint _time) public payable returns(uint256){
+    function deposit(address _add, uint _time) public payable returns(bool){
         require(_add != owner);
         
         
@@ -183,7 +183,7 @@ contract TronGlobal {
         
         
        
-        return this.balance;
+        return true;
     }
     
     
@@ -305,21 +305,21 @@ contract TronGlobal {
     }
   
     
-    // function dailyprize(address _add) public payable returns(bool){
-    //     if(msg.value>5000 trx && msg.value<25000 trx){
-    //         players[_add].Treasurycoins += 4000;
-    //         return true;
-    //     }else if(msg.value>25000 trx && msg.value<50000 trx){
-    //         players[_add].Treasurycoins += 15000;
-    //         return true;
-    //     }else if(msg.value>50000 trx && msg.value<100000 trx){
-    //         players[_add].Treasurycoins += 30000;
-    //         return true;
-    //     }else if(msg.value>100000 trx){
-    //         players[_add].Treasurycoins += 60000;
-    //         return true;
-    //     }
-    // }
+    function dailyprize(address _add) public payable returns(bool){
+        if(msg.value>5000 trx && msg.value<25000 trx){
+            players[_add].Treasurycoins += 4000;
+            return true;
+        }else if(msg.value>25000 trx && msg.value<50000 trx){
+            players[_add].Treasurycoins += 15000;
+            return true;
+        }else if(msg.value>50000 trx && msg.value<100000 trx){
+            players[_add].Treasurycoins += 30000;
+            return true;
+        }else if(msg.value>100000 trx){
+            players[_add].Treasurycoins += 60000;
+            return true;
+        }
+    }
     
     function timetask(address _add,uint _type) public returns(bool){
        
