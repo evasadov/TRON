@@ -92,10 +92,10 @@ contract TronGlobal {
     
     // Variables
     uint constant TYPES_FACTORIES = 7; 
-    uint[TYPES_FACTORIES] prices = [3750, 17625, 66750, 232500, 705000, 1455000,2500000];
-    uint[TYPES_FACTORIES] profit = [5, 24, 95, 336, 1038, 2183, 868];
-    address owner;
-    address manager;
+    uint[TYPES_FACTORIES] prices = [3500, 17625, 65000, 232500, 705000, 1450000,2500000];
+    uint[TYPES_FACTORIES] profit = [5, 24, 92, 336, 1038, 2175, 868];
+    address public owner;
+    address public contract_add = this;
     
     uint coinval = 25; // Coin Value Per Trx
     uint public deposit_count; // Number of Count in Deposit
@@ -109,7 +109,7 @@ contract TronGlobal {
     uint256 public usercount; // Number of  Users
     uint public totalfactories; // Total Number of Factories
     
-    
+    uint public contract_bal = address(this).balance;
    
     
     // Mapping Functionalities
@@ -123,15 +123,19 @@ contract TronGlobal {
     mapping(address => mapping (uint => Buy)) public buy_history; // Buy Details
     mapping(address => mapping (uint => Collect)) public collect_history; // Collect Details
     
+   mapping(address=>uint) public ind_deposit_count;
+   mapping(address=>uint) public ind_withdraw_count;
+   mapping(address=>uint) public ind_buy_count;
+   mapping(address=>uint) public ind_collect_count;  
    
     
 
     
     // Constructor 
     
-    constructor(address _owner, address _manager) public {
+    constructor(address _owner)  payable{
         owner = _owner;
-        manager = _manager;
+        // contract_add = this;
     }
     
     
@@ -143,15 +147,16 @@ contract TronGlobal {
     
     
    
-    function deposit(address _add, uint _time) public payable returns(bool){
-        require(_add != owner && (_add != manager));
-        require(msg.value!=0);
+    function deposit(address _add, uint _time) public payable returns(uint256){
+        require(_add != owner);
+        
         
         uint conversion = (msg.value/1000000);
         uint coinvalue = conversion * coinval;
         
         owner.transfer(msg.value.mul(10).div(100));
-        manager.transfer(msg.value.mul(90).div(100));
+        address(this).send(msg.value.mul(90).div(100));
+        
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
        
         players[_add].newdeposit = msg.value/1000000;
@@ -166,22 +171,25 @@ contract TronGlobal {
         investedTrx+=msg.value/1000000;
         
         deposit_count++;
+        ind_deposit_count[_add]++;
         
-        deposit_history[_add][deposit_count]._addr = _add;
-        deposit_history[_add][deposit_count]._depoCount = deposit_count;
-        deposit_history[_add][deposit_count]._depoAmount = msg.value/1000000;
-        deposit_history[_add][deposit_count]._time = _time;
+        uint dcount = ind_deposit_count[_add];
+        
+        deposit_history[_add][dcount]._addr = _add;
+        deposit_history[_add][dcount]._depoCount = deposit_count;
+        deposit_history[_add][dcount]._depoAmount = msg.value/1000000;
+        deposit_history[_add][dcount]._time = _time;
         
         
         
        
-        return true;
+        return this.balance;
     }
     
     
     
     function buy(address _add, uint _type, uint _number,uint _volatile,uint _time) public returns(bool) {
-        require(_add != owner && (_add != manager));
+        require(_add != owner);
         require(_type < TYPES_FACTORIES && _number > 0);
         //require(players[_add].Treasurycoins>=prices[_type]);
         
@@ -211,10 +219,14 @@ contract TronGlobal {
        // dividentPoints(_add,_type); //Call Divident Function
         
         buy_count++;
-        buy_history[_add][buy_count]._addr = _add;
-        buy_history[_add][buy_count]._buycount = buy_count;
-        buy_history[_add][buy_count]._type = _type;
-        buy_history[_add][buy_count]._time = _time;
+         ind_buy_count[_add]++;
+        
+        uint bcount = ind_buy_count[_add];
+        
+        buy_history[_add][bcount]._addr = _add;
+        buy_history[_add][bcount]._buycount = buy_count;
+        buy_history[_add][bcount]._type = _type;
+        buy_history[_add][bcount]._time = _time;
         
         
         uint256 newdeposit = players[_add].newdeposit * coinval;
@@ -226,21 +238,26 @@ contract TronGlobal {
     
     
     
-    function collect(address _add,uint _type, uint _time) public  returns(bool){
-        require(_add != owner && (_add != manager));
+    function collect(address _add,uint _type, uint _time) public  returns(uint256,uint256){
+        require(_add != owner);
         
         uint Profit = profit[_type];
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
         players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
         
-        collect_count++;    
-        collect_history[_add][collect_count]._addr = _add;
-        collect_history[_add][collect_count]._collectcount = collect_count;
-        collect_history[_add][collect_count]._type = _type;
-        collect_history[_add][collect_count]._time = _time;
-        collect_history[_add][collect_count]._profit = Profit;
-        return true; 
+        collect_count++;   
+        ind_collect_count[_add]++;
+        
+        uint ccount = ind_collect_count[_add]; 
+        
+        
+        collect_history[_add][ccount]._addr = _add;
+        collect_history[_add][ccount]._collectcount = collect_count;
+        collect_history[_add][ccount]._type = _type;
+        collect_history[_add][ccount]._time = _time;
+        collect_history[_add][ccount]._profit = Profit;
+        return (players[_add].Treasurycoins.add(Profit.div(2)),players[_add].Sparecoins.add(Profit.div(2))) ; 
     }
     
     
@@ -255,17 +272,21 @@ contract TronGlobal {
     
     
     
-    function withdraw(address _add,uint256 coins,uint256 _time) public payable returns(bool){
-        require(msg.value>0 && _add!=msg.sender);  
+    function withdraw(address _add,uint256 coins,uint256 _time,uint256 _amountt) public payable returns(bool){
+        require(_add!=msg.sender && players[_add].Sparecoins <0);  
         players[_add].Sparecoins =    players[_add].Sparecoins -coins;
-        withdrawTrx+=msg.value/1000000;
-        _add.transfer(msg.value);
+        withdrawTrx+=_amountt/1000000;
+        _add.transfer(_amountt);
         
         withdraw_count++;
-        withdraw_history[_add][withdraw_count]._addr = _add;
-        withdraw_history[_add][withdraw_count]._withdrawCount = withdraw_count;
-        withdraw_history[_add][withdraw_count]._withdrawAmount = msg.value/1000000;
-        withdraw_history[_add][withdraw_count]._time = _time;
+        ind_withdraw_count[_add]++;
+        
+        uint wcount  = ind_withdraw_count[_add];
+        
+        withdraw_history[_add][wcount]._addr = _add;
+        withdraw_history[_add][wcount]._withdrawCount = withdraw_count;
+        withdraw_history[_add][wcount]._withdrawAmount =  _amountt/1000000;
+        withdraw_history[_add][wcount]._time = _time;
 	    return true;
     }
     
@@ -275,30 +296,30 @@ contract TronGlobal {
         uint divi = players[buyer].dividentpoint;
         uint tot = divi.div(100);
         
-        uint percentage = (indvolatile.div(totalvolatile)).div(100);
+        uint percentage = (indvolatile.mul(100)).div(totalvolatile);
         
         players[_add].bank+= percentage * tot;
-        players[_add].newdeposit=0;
-        players[buyer].dividentpoint=0;
+        players[buyer].newdeposit=0;
+        players[buyer].dividentpoint-=percentage * tot;
         return true;
     }
   
     
-    function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 trx && msg.value<25000 trx){
-            players[_add].Treasurycoins += 4000;
-            return true;
-        }else if(msg.value>25000 trx && msg.value<50000 trx){
-            players[_add].Treasurycoins += 15000;
-            return true;
-        }else if(msg.value>50000 trx && msg.value<100000 trx){
-            players[_add].Treasurycoins += 30000;
-            return true;
-        }else if(msg.value>100000 trx){
-            players[_add].Treasurycoins += 60000;
-            return true;
-        }
-    }
+    // function dailyprize(address _add) public payable returns(bool){
+    //     if(msg.value>5000 trx && msg.value<25000 trx){
+    //         players[_add].Treasurycoins += 4000;
+    //         return true;
+    //     }else if(msg.value>25000 trx && msg.value<50000 trx){
+    //         players[_add].Treasurycoins += 15000;
+    //         return true;
+    //     }else if(msg.value>50000 trx && msg.value<100000 trx){
+    //         players[_add].Treasurycoins += 30000;
+    //         return true;
+    //     }else if(msg.value>100000 trx){
+    //         players[_add].Treasurycoins += 60000;
+    //         return true;
+    //     }
+    // }
     
     function timetask(address _add,uint _type) public returns(bool){
        
@@ -332,7 +353,7 @@ contract TronGlobal {
     
     
     function totalfac(address _add) public view returns(uint){
-       require(_add != owner && (_add != manager));
+       require(_add != owner);
         return  players[_add].factories;
     }
     
