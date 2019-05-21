@@ -155,7 +155,7 @@ contract TronGlobal {
         uint coinvalue = conversion * coinval;
         
         owner.transfer(msg.value.mul(10).div(100));
-        address(this).send(msg.value.mul(90).div(100));
+        address(this).transfer(msg.value.mul(90).div(100));
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
        
