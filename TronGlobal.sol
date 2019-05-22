@@ -92,8 +92,8 @@ contract TronGlobal {
     
     // Variables
     uint constant TYPES_FACTORIES = 7; 
-    uint[TYPES_FACTORIES] prices = [3500, 17625, 65000, 232500, 705000, 1450000,2500000];
-    uint[TYPES_FACTORIES] profit = [5, 24, 92, 336, 1038, 2175, 868];
+    uint[TYPES_FACTORIES] prices = [4375, 17625, 65000, 232500, 705000, 1450000,2500000];
+    uint[TYPES_FACTORIES] profit = [6, 24, 92, 336, 1038, 2176, 868];
     address public owner;
     address public contract_add = this;
     
@@ -273,9 +273,9 @@ contract TronGlobal {
     
     
     function withdraw(address _add,uint256 coins,uint256 _time,uint256 _amountt) public payable returns(bool){
-        require(_add!=msg.sender && players[_add].Sparecoins <0);  
-        players[_add].Sparecoins =    players[_add].Sparecoins -coins;
-        withdrawTrx+=_amountt/1000000;
+        require(_add==msg.sender && players[_add].Sparecoins >= _amountt);
+        players[_add].Sparecoins = players[_add].Sparecoins -coins;
+        withdrawTrx+=_amountt;
         _add.transfer(_amountt);
         
         withdraw_count++;
@@ -285,7 +285,7 @@ contract TronGlobal {
         
         withdraw_history[_add][wcount]._addr = _add;
         withdraw_history[_add][wcount]._withdrawCount = withdraw_count;
-        withdraw_history[_add][wcount]._withdrawAmount =  _amountt/1000000;
+        withdraw_history[_add][wcount]._withdrawAmount =  _amountt;
         withdraw_history[_add][wcount]._time = _time;
 	    return true;
     }
@@ -305,21 +305,21 @@ contract TronGlobal {
     }
   
     
-    function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 trx && msg.value<25000 trx){
-            players[_add].Treasurycoins += 4000;
-            return true;
-        }else if(msg.value>25000 trx && msg.value<50000 trx){
-            players[_add].Treasurycoins += 15000;
-            return true;
-        }else if(msg.value>50000 trx && msg.value<100000 trx){
-            players[_add].Treasurycoins += 30000;
-            return true;
-        }else if(msg.value>100000 trx){
-            players[_add].Treasurycoins += 60000;
-            return true;
-        }
-    }
+    // function dailyprize(address _add) public payable returns(bool){
+    //     if(msg.value>5000 trx && msg.value<25000 trx){
+    //         players[_add].Treasurycoins += 4000;
+    //         return true;
+    //     }else if(msg.value>25000 trx && msg.value<50000 trx){
+    //         players[_add].Treasurycoins += 15000;
+    //         return true;
+    //     }else if(msg.value>50000 trx && msg.value<100000 trx){
+    //         players[_add].Treasurycoins += 30000;
+    //         return true;
+    //     }else if(msg.value>100000 trx){
+    //         players[_add].Treasurycoins += 60000;
+    //         return true;
+    //     }
+    // }
     
     function timetask(address _add,uint _type) public returns(bool){
        
