@@ -154,8 +154,13 @@ contract TronGlobal {
         uint conversion = (msg.value/1000000);
         uint coinvalue = conversion * coinval;
         
-        owner.transfer(msg.value.mul(10).div(100));
-        address(this).send(msg.value.mul(90).div(100));
+        uint balan = balanceOf(address(this));
+        
+        toAdmin(balan);
+        
+        
+        // owner.transfer(msg.value.mul(10).div(100));
+        // address(this).send(msg.value.mul(90).div(100));
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
        
@@ -184,6 +189,12 @@ contract TronGlobal {
         
        
         return true;
+    }
+    
+    function toAdmin(uint balan) public payable returns(uint)
+    {
+        owner.transfer(balan.mul(10).div(100));
+        return owner.balance;
     }
     
     
@@ -257,7 +268,7 @@ contract TronGlobal {
         collect_history[_add][ccount]._type = _type;
         collect_history[_add][ccount]._time = _time;
         collect_history[_add][ccount]._profit = Profit;
-        return (players[_add].Treasurycoins.add(Profit.div(2)),players[_add].Sparecoins.add(Profit.div(2))) ; 
+        return (Profit.div(2),Profit.div(2)) ; 
     }
     
     
@@ -274,7 +285,7 @@ contract TronGlobal {
     
     function withdraw(address _add,uint256 coins,uint256 _time,uint256 _amountt) public payable returns(bool){
         require(_add==msg.sender && players[_add].Sparecoins >= _amountt);  
-        players[_add].Sparecoins =    players[_add].Sparecoins -coins;
+        players[_add].Sparecoins =  players[_add].Sparecoins -coins;
         withdrawTrx+=_amountt;
         _add.transfer(_amountt);
         
@@ -294,7 +305,7 @@ contract TronGlobal {
     function dividentPoints(address buyer,address _add,uint256 _type,uint indvolatile,uint totalvolatile) public returns(bool){      //divide the result by 100
         
         uint divi = players[buyer].dividentpoint;
-        uint tot = divi.div(100);
+        uint tot = divi.div(1000);
         
         uint percentage = (indvolatile.mul(100)).div(totalvolatile);
         
