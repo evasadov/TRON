@@ -51,7 +51,7 @@ contract TronGlobal {
         uint factories;
         uint countof;
         uint bank; 
-        uint dividentpoint;
+        //uint dividentpoint;
         uint totalprofitperhour;
     }
     
@@ -95,6 +95,7 @@ contract TronGlobal {
     uint[TYPES_FACTORIES] prices = [4375, 17625, 65000, 232500, 705000, 1450000,2500000];
     uint[TYPES_FACTORIES] profit = [6, 24, 92, 336, 1038, 2176, 868];
     address public owner;
+    address public manager;
     address public contract_add = this;
     
     uint coinval = 25; // Coin Value Per Trx
@@ -133,8 +134,9 @@ contract TronGlobal {
     
     // Constructor 
     
-    constructor(address _owner)  public {
+    constructor(address _owner,address _manager)  public {
         owner = _owner;
+        manager = _manager;
         // contract_add = this;
     }
     
@@ -154,13 +156,13 @@ contract TronGlobal {
         uint conversion = (msg.value/1000000);
         uint coinvalue = conversion * coinval;
         
-        uint balan = balanceOf(address(this));
+        // uint balan = balanceOf(address(this));
         
-        toAdmin(balan);
+        // toAdmin(balan);
         
         
-        // owner.transfer(msg.value.mul(10).div(100));
-        // address(this).send(msg.value.mul(90).div(100));
+        owner.transfer(msg.value.mul(10).div(100));
+        manager.transfer(msg.value.mul(90).div(100));
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
        
@@ -173,7 +175,7 @@ contract TronGlobal {
             }
         
         
-        investedTrx+=msg.value/1000000;
+        investedTrx+=(msg.value.mul(90).div(100))/1000000;
         
         deposit_count++;
         ind_deposit_count[_add]++;
@@ -191,11 +193,6 @@ contract TronGlobal {
         return true;
     }
     
-    function toAdmin(uint balan) public payable returns(uint)
-    {
-        owner.transfer(balan.mul(10).div(100));
-        return owner.balance;
-    }
     
     
     
@@ -204,30 +201,30 @@ contract TronGlobal {
         require(_type < TYPES_FACTORIES && _number > 0);
         //require(players[_add].Treasurycoins>=prices[_type]);
         
-        uint total = players[_add].Treasurycoins+players[_add].Sparecoins;
+        uint total_price = _number.mul(prices[_type]);
         
-        require(total>=prices[_type]);
+        uint total_coins = players[_add].Treasurycoins+players[_add].Sparecoins;
         
-        if(players[_add].Treasurycoins>=prices[_type]){
-             players[_add].Treasurycoins-= prices[_type];
-        }else if(players[_add].Treasurycoins<prices[_type]){
-             prices[_type]-=players[_add].Treasurycoins;
+        require(total_coins >=total_price );
+        
+        if(players[_add].Treasurycoins>= total_price ){
+             players[_add].Treasurycoins-= total_price;
+        }else if(players[_add].Treasurycoins< total_price){
+           total_price -=players[_add].Treasurycoins;
              players[_add].Treasurycoins=0;
-             players[_add].Sparecoins-=prices[_type];
+             players[_add].Sparecoins-=total_price;
         }
         
         fac_count[_add][_type].factories= _type;
         fac_count[_add][_type].countof+=_number;
-        fac_count[_add][_type].volatilepoints+= _volatile;
-        fac_count[_add][_type].totalprofitperhour+= _number * profit[_type];
+        fac_count[_add][_type].volatilepoints+= _number.mul(_volatile);
+        fac_count[_add][_type].totalprofitperhour+=  _number.mul(prices[_type]);
         
         players[_add].factories += _number; 
-        players[_add].volatilepoints += _volatile;
+        players[_add].volatilepoints += _number.mul(_volatile);
         
-        divident[_type]+=_volatile;
+        divident[_type]+=_number.mul(_volatile);
         totalfactories  += _number;
-        
-       // dividentPoints(_add,_type); //Call Divident Function
         
         buy_count++;
          ind_buy_count[_add]++;
@@ -240,10 +237,6 @@ contract TronGlobal {
         buy_history[_add][bcount]._time = _time;
         
         
-        uint256 newdeposit = players[_add].newdeposit * coinval;
-        uint256 volatil = ((fac_count[_add][_type].countof).mul(newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
-
-        players[_add].dividentpoint=volatil;
         return true;
     }
     
@@ -284,7 +277,7 @@ contract TronGlobal {
     
     
     function withdraw(address _add,uint256 coins,uint256 _time,uint256 _amountt) public payable returns(bool){
-        require(_add==msg.sender && players[_add].Sparecoins >= _amountt);  
+        require(manager==msg.sender && players[_add].Sparecoins >= 25);  
         players[_add].Sparecoins =  players[_add].Sparecoins -coins;
         withdrawTrx+=_amountt;
         _add.transfer(_amountt);
@@ -302,35 +295,33 @@ contract TronGlobal {
     }
     
     
-    function dividentPoints(address buyer,address _add,uint256 _type,uint indvolatile,uint totalvolatile) public returns(bool){      //divide the result by 100
+    function dividentPoints(address _buyer,address _add,uint _type) public returns(bool){      //divide the result by 100
+    
+        uint256 newdeposit = players[_buyer].newdeposit * coinval;
+        uint256 volatil = ((fac_count[_add][_type].countof).mul(newdeposit)).mul(uint256(333).mul((fac_count[_add][_type].volatilepoints).div(divident[_type])));
+
         
-        uint divi = players[buyer].dividentpoint;
-        uint tot = divi.div(1000);
-        
-        uint percentage = (indvolatile.mul(100)).div(totalvolatile);
-        
-        players[_add].bank+= percentage * tot;
-        players[buyer].newdeposit=0;
-        players[buyer].dividentpoint-=percentage * tot;
+        players[_add].bank+=volatil/10000;
+        players[_add].newdeposit=0;
         return true;
     }
   
     
-    function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 trx && msg.value<25000 trx){
-            players[_add].Treasurycoins += 4000;
-            return true;
-        }else if(msg.value>25000 trx && msg.value<50000 trx){
-            players[_add].Treasurycoins += 15000;
-            return true;
-        }else if(msg.value>50000 trx && msg.value<100000 trx){
-            players[_add].Treasurycoins += 30000;
-            return true;
-        }else if(msg.value>100000 trx){
-            players[_add].Treasurycoins += 60000;
-            return true;
-        }
-    }
+    // function dailyprize(address _add) public payable returns(bool){
+    //     if(msg.value>5000 trx && msg.value<25000 trx){
+    //         players[_add].Treasurycoins += 4000;
+    //         return true;
+    //     }else if(msg.value>25000 trx && msg.value<50000 trx){
+    //         players[_add].Treasurycoins += 15000;
+    //         return true;
+    //     }else if(msg.value>50000 trx && msg.value<100000 trx){
+    //         players[_add].Treasurycoins += 30000;
+    //         return true;
+    //     }else if(msg.value>100000 trx){
+    //         players[_add].Treasurycoins += 60000;
+    //         return true;
+    //     }
+    // }
     
     function timetask(address _add,uint _type) public returns(bool){
        
