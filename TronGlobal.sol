@@ -161,10 +161,10 @@ contract TronGlobal {
     
     
     
-    function collect(address _add,uint _type, uint _time) public  returns(uint256,uint256){
+    function collect(address _add,uint _type, uint count) public  returns(uint256,uint256){
         require(_add != owner);
         
-        uint Profit = profit[_type];
+        uint Profit = profit[_type] * count;
         
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
         players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
