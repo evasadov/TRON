@@ -200,18 +200,18 @@ contract TronGlobal {
     }
   
     
-    function dailyprize(address _add) public payable returns(bool){
-        if(msg.value>5000 trx && msg.value<25000 trx){
-            players[_add].Treasurycoins += 4000;
+    function dailyprize(address _add,uint amount) public payable returns(bool){
+        if(amount>5000 && amount<25000 ){
+            players[_add].bank += 4000;
             return true;
-        }else if(msg.value>25000 trx && msg.value<50000 trx){
-            players[_add].Treasurycoins += 15000;
+        }else if(amount>25000  && amount<50000 ){
+            players[_add].bank += 15000;
             return true;
-        }else if(msg.value>50000 trx && msg.value<100000 trx){
-            players[_add].Treasurycoins += 30000;
+        }else if(amount>50000  &&amount<100000 ){
+            players[_add].bank += 30000;
             return true;
-        }else if(msg.value>100000 trx){
-            players[_add].Treasurycoins += 60000;
+        }else if(amount >100000 ){
+            players[_add].bank += 60000;
             return true;
         }
     }
@@ -244,8 +244,6 @@ contract TronGlobal {
             return false;
         }
     }
-    
-    
     
     
     function totalfac(address _add) public view returns(uint){
