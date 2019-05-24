@@ -211,7 +211,7 @@ contract TronGlobal {
             players[_add].bank += 30000;
             return true;
         }else if(amount >100000 ){
-            players[_add].Treasurycoins += 60000;
+            players[_add].bank += 60000;
             return true;
         }
     }
@@ -219,25 +219,25 @@ contract TronGlobal {
     function timetask(address _add,uint _type) public returns(bool){
        
          if( players[_add].factories>=400 &&  players[_add].volatilepoints>=25000 && fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3&& fac_count[_add][_type].countof==1){
-            players[_add].Treasurycoins+=1455000;
+            players[_add].bank+=1455000;
             return true;
         }else if( players[_add].volatilepoints>=25000){
-            players[_add].Treasurycoins+=300000;
+            players[_add].bank+=300000;
             return true;
         }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
-            players[_add].Treasurycoins+=250000;
+            players[_add].bank+=250000;
             return true;
         }else if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<25000){
-            players[_add].Treasurycoins+=100000;
+            players[_add].bank+=100000;
             return true;
         }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
-            players[_add].Treasurycoins+=75000;
+            players[_add].bank+=75000;
             return true;
         }else if( players[_add].factories>=400){
-            players[_add].Treasurycoins+=55000;
+            players[_add].bank+=55000;
             return true;
         }else if( players[_add].factories >=100 && players[_add].factories<400){
-            players[_add].Treasurycoins+=13000;
+            players[_add].bank+=13000;
             return true;
         }
         else{
