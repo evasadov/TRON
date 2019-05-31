@@ -64,7 +64,7 @@ contract TronGlobal {
     address public manager;
     address public contract_add = this;
     
-    uint coinval = 500; // Coin Value Per Trx
+    uint coinval = 25; // Coin Value Per Trx
     
     // Public Variables
     uint256 public investedTrx; // Total Amount of  Deposit
