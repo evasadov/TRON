@@ -64,7 +64,7 @@ contract TronGlobal {
     address public manager;
     address public contract_add = this;
     
-    uint coinval = 25; // Coin Value Per Trx
+    uint coinval = 500; // Coin Value Per Trx
     
     // Public Variables
     uint256 public investedTrx; // Total Amount of  Deposit
@@ -173,7 +173,7 @@ contract TronGlobal {
     function withdraw(address _add,uint256 coins) public returns(bool){
         require(manager==msg.sender && players[_add].Sparecoins >= 25);  
         players[_add].Sparecoins =  players[_add].Sparecoins -coins;
-        withdrawTrx+=(coins/25);
+        withdrawTrx+=(coins/coinval);
 
 	    return true;
     }
@@ -203,16 +203,16 @@ contract TronGlobal {
     
     function timetask(address _add,uint _type) public returns(bool){
        
-         if( players[_add].factories>=400 &&  players[_add].volatilepoints>=25000 && fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3&& fac_count[_add][_type].countof==1){
+         if( players[_add].factories>=400 &&  players[_add].volatilepoints>=2500 && fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
             players[_add].bank+=1455000;
             return true;
-        }else if( players[_add].volatilepoints>=25000){
+        }else if( players[_add].volatilepoints>=2500){
             players[_add].bank+=300000;
             return true;
         }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
             players[_add].bank+=250000;
             return true;
-        }else if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<25000){
+        }else if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<2500){
             players[_add].bank+=100000;
             return true;
         }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
