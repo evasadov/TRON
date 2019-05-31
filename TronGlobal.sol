@@ -98,18 +98,9 @@ contract TronGlobal {
     
     
    
-    function deposit(address _add, uint _time) public payable returns(bool){
+    function deposit(address _add, uint coins,uint amount) public returns(bool){
         require(_add != owner);
-        
-        
-        uint conversion = (msg.value/1000000);
-        uint coinvalue = conversion * coinval;
-        
-        
-        owner.transfer(msg.value.mul(10).div(100));
-        manager.transfer(msg.value.mul(90).div(100));
-        
-        players[_add].Treasurycoins = players[_add].Treasurycoins.add(coinvalue);
+        players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
        
                 if(userstatus[_add]==false)
             {
@@ -118,7 +109,7 @@ contract TronGlobal {
             }
         
         
-        investedTrx+=(msg.value.mul(90).div(100))/1000000;
+        investedTrx+=amount;
         
         return true;
     }
@@ -162,10 +153,8 @@ contract TronGlobal {
     
     
     function collect(address _add,uint _type, uint count) public  returns(uint256,uint256){
-        require(_add != owner);
-        
-        uint Profit = profit[_type] * count;
-        
+        require(_add != owner);  
+        uint Profit = profit[_type] * count;     
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
         players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
         
@@ -179,17 +168,13 @@ contract TronGlobal {
         players[_add].Treasurycoins+=players[_add].bank;
         players[_add].bank=0;
         return true;
-    }
+    }    
     
-    
-    
-    
-    function withdraw(address _add,uint256 coins,uint256 _time) public payable returns(bool){
+    function withdraw(address _add,uint256 coins) public returns(bool){
         require(manager==msg.sender && players[_add].Sparecoins >= 25);  
         players[_add].Sparecoins =  players[_add].Sparecoins -coins;
-        withdrawTrx+=msg.value/1000000;
-        _add.transfer(msg.value);
-        
+        withdrawTrx+=(coins/25);
+
 	    return true;
     }
     
@@ -200,17 +185,17 @@ contract TronGlobal {
     }
   
     
-    function dailyprize(address _add,uint amount) public payable returns(bool){
-        if(amount>5000 && amount<25000 ){
+    function dailyprize(address _add,uint amount) public returns(bool){
+        if(amount>=5000 && amount<25000 ){
             players[_add].bank += 4000;
             return true;
-        }else if(amount>25000  && amount<50000 ){
+        }else if(amount>=25000  && amount<50000 ){
             players[_add].bank += 15000;
             return true;
-        }else if(amount>50000  &&amount<100000 ){
+        }else if(amount>=50000  &&amount<100000 ){
             players[_add].bank += 30000;
             return true;
-        }else if(amount >100000 ){
+        }else if(amount >=100000 ){
             players[_add].bank += 60000;
             return true;
         }
