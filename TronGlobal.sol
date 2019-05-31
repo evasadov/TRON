@@ -206,30 +206,30 @@ contract TronGlobal {
          if( players[_add].factories>=400 &&  players[_add].volatilepoints>=2500 && fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
             players[_add].bank+=1455000;
             return true;
-        }else if( players[_add].volatilepoints>=2500){
+        }
+        else {
+            if( players[_add].volatilepoints>=2500){
             players[_add].bank+=300000;
             return true;
-        }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
+        } if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
             players[_add].bank+=250000;
             return true;
-        }else if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<2500){
+        } if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<2500){
             players[_add].bank+=100000;
             return true;
-        }else if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
+        } if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
             players[_add].bank+=75000;
             return true;
-        }else if( players[_add].factories>=400){
+        } if( players[_add].factories>=400){
             players[_add].bank+=55000;
             return true;
-        }else if( players[_add].factories >=100 && players[_add].factories<400){
+        } if( players[_add].factories >=100 && players[_add].factories<400){
             players[_add].bank+=13000;
             return true;
         }
-        else{
-            return false;
-        }
+        
     }
-    
+    }
     
     function totalfac(address _add) public view returns(uint){
        require(_add != owner);
