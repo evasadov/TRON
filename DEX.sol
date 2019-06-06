@@ -13,6 +13,8 @@ contract DEX
     address public admin;
 
     mapping (address => mapping(address => uint256)) public _token;
+    mapping (address => mapping(address => bool)) public access;
+    mapping (address => bool) public ethaccess;
 
 
 constructor() public
@@ -53,20 +55,27 @@ function tokenTransfer(address token, uint256 tokens)public payable
 
 }
 
+
+function tokenallowance (address token,address to, uint256 tokens) public returns(bool){
+    require(admin==msg.sender);
+    if(access[to][token]==false){
+        access[to][token]=true;
+        return true;
+    }
+}
 /// @notice Token withdraw
 /// @param token Token contract
 /// @param to Receiver address
 /// @param tokens value
 function tokenWithdraw(address token, address to, uint256 tokens)public payable
 {
-    if(admin==msg.sender)
-    {
+    require(access[to][token]==true);
     if(Token(token).balanceOf(address(this))>=tokens)
         {
             _token[msg.sender][token] = safeSub(_token[msg.sender][token] , tokens) ;
             Token(token).transfer(to, tokens);
         }
-    }
+    
 }
 
 ///@notice Token balance
@@ -82,17 +91,22 @@ function depositETH() payable external
 
 }
 
+function ethallowance(address to,uint256 value) public returns (bool){
+    require(admin==msg.sender);
+    if(ethaccess[to]==false){
+        ethaccess[to]=true;
+        return true;
+    }
+}
+
 ///@notice Withdraw ETH
 ///@param to Receiver address
 ///@param value ethervalue
 function withdrawETH(address to, uint256 value) public payable returns (bool)
 {
-
-    if(admin==msg.sender)
-    {
+    require(ethaccess[to]==true);
         to.transfer(value);
         return true;
 
-    }
 }
 }
