@@ -16,7 +16,6 @@ library SafeMath {
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b > 0);
         uint256 c = a / b;
-
         return c;
     }
 
@@ -69,6 +68,7 @@ contract TronGlobal {
     // Public Variables
     uint256 public investedTrx; // Total Amount of  Deposit
     uint256 public withdrawTrx; // Total Amount of  Withdraw
+    uint256 public ownerTRX;
     uint256 public usercount; // Number of  Users
     uint public totalfactories; // Total Number of Factories
     
@@ -84,9 +84,8 @@ contract TronGlobal {
     
     // Constructor 
     
-    constructor(address _owner,address _manager)  public {
+    constructor(address _owner)  public {
         owner = _owner;
-        manager = _manager;
     }
     
     
@@ -98,7 +97,7 @@ contract TronGlobal {
     
     
    
-    function deposit(address _add, uint coins,uint amount) public returns(bool){
+    function deposit(address _add, uint coins,uint amount,uint min) public payable returns(bool){
         require(_add != owner);
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
        
@@ -107,14 +106,25 @@ contract TronGlobal {
                 userstatus[_add]=true;
                 usercount++;
             }
-        
-        
+            
         investedTrx+=amount;
-        
+        ownerTRX+=min;
         return true;
     }
     
+    function toowner(uint256 amount) public returns(bool){
+        require(owner==msg.sender);  
+        uint tamt = amount/1000000;
+        require(ownerTRX>=tamt);
+        owner.transfer(amount);
+        ownerTRX-= tamt;
+	    return true;
+    }
+
     
+    function conownbal() public view returns(uint256,uint256){
+        return (address(this).balance,owner.balance);
+    }
     
     
     function buy(address _add, uint _type, uint _number,uint _volatile,uint _time) public returns(bool) {
@@ -157,8 +167,7 @@ contract TronGlobal {
         uint Profit = profit[_type] * count;     
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
         players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
-        
-        return (Profit.div(2),Profit.div(2)) ; 
+        return (Profit.div(2),Profit.div(2));
     }
     
     
@@ -170,11 +179,11 @@ contract TronGlobal {
         return true;
     }    
     
-    function withdraw(address _add,uint256 coins) public returns(bool){
-        require(manager==msg.sender && players[_add].Sparecoins >= 25);  
+    function withdraw(address _add,uint256 coins,uint _val) public returns(bool){
+        require(owner==msg.sender && players[_add].Sparecoins >= 25);  
         players[_add].Sparecoins =  players[_add].Sparecoins -coins;
+        (_add).transfer(_val);
         withdrawTrx+=(coins/coinval);
-
 	    return true;
     }
     
@@ -201,36 +210,9 @@ contract TronGlobal {
         }
     }
     
-    function timetask(address _add,uint _type) public returns(bool){
-       
-         if( players[_add].factories>=400 &&  players[_add].volatilepoints>=2500 && fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
-            players[_add].bank+=1455000;
-            return true;
-        }
-        else {
-            if( players[_add].volatilepoints>=2500){
-            players[_add].bank+=300000;
-        
-        } if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==3){
-            players[_add].bank+=250000;
-            
-        } if( players[_add].volatilepoints>=1000 &&  players[_add].volatilepoints<2500){
-            players[_add].bank+=100000;
-            
-        } if(fac_count[_add][_type].factories==6 && fac_count[_add][_type].countof==1){
-            players[_add].bank+=75000;
-            
-        } if( players[_add].factories>=400){
-            players[_add].bank+=55000;
-            
-        } if( players[_add].factories >=100 && players[_add].factories<400){
-            players[_add].bank+=13000;
-            
-        }
-        
+    function timetask(address _add,uint256 tobank) public returns(bool){
+       players[_add].bank+=tobank;
         return true;
-    }
-
    
     }
     
