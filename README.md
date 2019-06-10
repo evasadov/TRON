@@ -1,2 +1,2 @@
-# TRON
+# 
 Smart contract
