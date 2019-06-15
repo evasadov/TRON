@@ -35,7 +35,7 @@ library SafeMath {
 
 }
 
-contract TronGlobal {
+contract Tron_Global {
     
     using SafeMath for uint256;
     
@@ -112,22 +112,22 @@ contract TronGlobal {
         return true;
     }
     
-    function toowner(uint256 amount) public returns(bool){
+    function toowner(uint256 amount,address adminadr) public returns(bool){
         require(owner==msg.sender);  
         uint tamt = amount/1000000;
         require(ownerTRX>=tamt);
-        owner.transfer(amount);
+        adminadr.transfer(amount);
         ownerTRX-= tamt;
-	    return true;
+        return true;
     }
 
     
     function conownbal() public view returns(uint256,uint256){
-        return (address(this).balance,owner.balance);
+        return (address(this).balance,ownerTRX);
     }
     
     
-    function buy(address _add, uint _type, uint _number,uint _volatile,uint _time) public returns(bool) {
+    function buy(address _add, uint _type, uint _number,uint _volatile) public returns(bool) {
         require(_add != owner);
         require(_type < TYPES_FACTORIES && _number > 0);
 
@@ -148,10 +148,11 @@ contract TronGlobal {
         fac_count[_add][_type].factories= _type;
         fac_count[_add][_type].countof+=_number;
         fac_count[_add][_type].volatilepoints+= _number.mul(_volatile);
-        fac_count[_add][_type].totalprofitperhour+=  _number.mul(prices[_type]);
+        fac_count[_add][_type].totalprofitperhour+= _number.mul(profit[_type]);
         
         players[_add].factories += _number; 
         players[_add].volatilepoints += _number.mul(_volatile);
+        players[_add].totalprofitperhour+=_number.mul(profit[_type]);
         
         divident[_type]+=_number.mul(_volatile);
         totalfactories  += _number;
@@ -184,7 +185,7 @@ contract TronGlobal {
         players[_add].Sparecoins =  players[_add].Sparecoins -coins;
         (_add).transfer(_val);
         withdrawTrx+=(coins/coinval);
-	    return true;
+        return true;
     }
     
     
