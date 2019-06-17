@@ -99,8 +99,7 @@ contract Tron_Global {
    
     function deposit(address _add, uint coins,uint amount,uint min) public payable returns(bool){
         require(_add != owner);
-        uint _val = amount * coinval;
-        require(_val==coins);
+        require((msg.value*coinval)==coins);
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
        
                 if(userstatus[_add]==false)
