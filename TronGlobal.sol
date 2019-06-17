@@ -99,6 +99,8 @@ contract Tron_Global {
    
     function deposit(address _add, uint coins,uint amount,uint min) public payable returns(bool){
         require(_add != owner);
+        uint _val = amount * coinval;
+        require(_val==coins);
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
        
                 if(userstatus[_add]==false)
@@ -164,7 +166,7 @@ contract Tron_Global {
     
     
     function collect(address _add,uint _type, uint count) public  returns(uint256,uint256){
-        require(_add != owner);  
+        require(_add != owner && msg.sender == owner);  
         uint Profit = profit[_type] * count;     
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
         players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
