@@ -50,6 +50,7 @@ contract Tron_Global {
         uint countof;
         uint bank; 
         uint totalprofitperhour;
+        uint time;
     }
     
     
@@ -98,18 +99,21 @@ contract Tron_Global {
     
    
     function deposit(address _add, uint coins,uint amount,uint min) public payable returns(bool){
-        require(_add != owner);
-        require((msg.value*coinval)==coins);
+        require(_add != owner && _add == msg.sender);
+        uint _val = amount * coinval;
+        require(_val==coins);
         players[_add].Treasurycoins = players[_add].Treasurycoins.add(coins);
        
-                if(userstatus[_add]==false)
+                if(userstatus[_add]==false && players[_add].time == 0)
             {
                 userstatus[_add]=true;
+                players[_add].time = now;
                 usercount++;
             }
             
         investedTrx+=amount;
         ownerTRX+=min;
+        
         return true;
     }
     
@@ -129,8 +133,9 @@ contract Tron_Global {
     
     
     function buy(address _add, uint _type, uint _number,uint _volatile) public returns(bool) {
-        require(_add != owner);
+        require(_add != owner && _add == msg.sender);
         require(_type < TYPES_FACTORIES && _number > 0);
+        collect(_add);
 
         uint total_price = _number.mul(prices[_type]);
         
@@ -164,12 +169,26 @@ contract Tron_Global {
     
     
     
-    function collect(address _add,uint _type, uint count) public  returns(uint256,uint256){
-        require(_add != owner && msg.sender == owner);  
-        uint Profit = profit[_type] * count;     
-        players[_add].Treasurycoins = players[_add].Treasurycoins.add(Profit.div(2));
-        players[_add].Sparecoins = players[_add].Sparecoins.add(Profit.div(2));
-        return (Profit.div(2),Profit.div(2));
+    function collect(address _add) internal {
+       
+        require(players[_add].time > 0);
+
+        uint hoursPassed = ( now.sub(players[_add].time) ).div(60 minutes);
+        
+        if (hoursPassed > 0) {
+            uint hourlyProfit;
+            for (uint i = 0; i < TYPES_FACTORIES; i++) {
+                hourlyProfit = hourlyProfit.add( fac_count[_add][i].countof.mul(profit[i]) );
+            }
+            
+            
+            uint collectCoins = hoursPassed.mul(hourlyProfit);
+            players[_add].time =  players[_add].time.add(hoursPassed.mul(60 minutes));
+            players[_add].Treasurycoins = players[_add].Treasurycoins.add(collectCoins.div(2));
+            players[_add].Sparecoins = players[_add].Sparecoins.add(collectCoins.div(2));
+           //return (collectCoins.div(2),collectCoins.div(2));
+        }
+    
     }
     
     
@@ -183,7 +202,8 @@ contract Tron_Global {
     
     function withdraw(address _add,uint256 coins,uint _val) public returns(bool){
         require(owner==msg.sender && players[_add].Sparecoins >= 25);  
-        players[_add].Sparecoins =  players[_add].Sparecoins -coins;
+        collect(_add);
+        players[_add].Sparecoins =  players[_add].Sparecoins - coins;
         (_add).transfer(_val);
         withdrawTrx+=(coins/coinval);
         return true;
